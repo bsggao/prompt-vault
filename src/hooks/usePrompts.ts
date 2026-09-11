@@ -12,7 +12,7 @@ export function usePrompts() {
   const query = useQuery({
     queryKey,
     queryFn: getPrompts,
-    enabled: ready && !!supabase && !!user,
+    enabled: ready && !!supabase,
     staleTime: 60_000,
     refetchInterval: 30 * 60_000,
     refetchOnWindowFocus: true,

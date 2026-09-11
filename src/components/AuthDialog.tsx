@@ -325,7 +325,7 @@ export function AuthDialog({
         </>
       )}
       <p className="auth-privacy">
-        {t('Your images and prompts are stored in the cloud, accessible only to you by default.')}
+        {t('Choose whether each upload is public or private. Only you can edit your uploads.')}
       </p>
     </Modal>
   )

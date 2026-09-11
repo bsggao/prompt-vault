@@ -23,10 +23,17 @@ function toRow(item: PromptInput) {
     is_public: item.isPublic,
   }
 }
-type PromptRow = ReturnType<typeof toRow> & { id: string; created_at: string; updated_at: string }
+type PromptRow = ReturnType<typeof toRow> & {
+  id: string
+  user_id: string
+  created_at: string
+  updated_at: string
+}
+
 function fromRow(row: PromptRow, imageUrl: string): PromptItem {
   return {
     id: row.id,
+    ownerId: row.user_id,
     title: row.title,
     imageUrl,
     prompt: row.prompt,
@@ -49,15 +56,21 @@ export async function getPrompts(): Promise<PromptItem[]> {
   const {
     data: { session },
   } = await supabase.auth.getSession()
-  if (!session) return []
   const { data, error } = await supabase
     .from('prompts')
     .select('*')
-    .eq('user_id', session.user.id)
     .order('created_at', { ascending: false })
   if (error) throw error
   const rows = data as PromptRow[]
   if (!rows.length) return []
+  let favoriteIds = new Set<string>()
+  if (session) {
+    const { data: favorites, error: favoriteError } = await supabase
+      .from('prompt_favorites')
+      .select('prompt_id')
+    if (favoriteError) throw favoriteError
+    favoriteIds = new Set((favorites ?? []).map((favorite) => favorite.prompt_id))
+  }
   const { data: urls, error: imageError } = await supabase.storage
     .from('prompt-images')
     .createSignedUrls(
@@ -65,7 +78,10 @@ export async function getPrompts(): Promise<PromptItem[]> {
       3600,
     )
   if (imageError) throw imageError
-  return rows.map((r, index) => fromRow(r, urls?.[index]?.signedUrl ?? ''))
+  return rows.map((r, index) => ({
+    ...fromRow(r, urls?.[index]?.signedUrl ?? ''),
+    isFavorite: favoriteIds.has(r.id),
+  }))
 }
 export async function savePrompt(input: PromptInput, id?: string, file?: File): Promise<void> {
   const supabase = requireSupabase()
@@ -112,13 +128,14 @@ export async function savePrompt(input: PromptInput, id?: string, file?: File): 
 }
 export async function toggleFavorite(item: PromptItem): Promise<void> {
   const supabase = requireSupabase()
-  const { error } = await supabase
-    .from('prompts')
-    .update({ is_favorite: !item.isFavorite })
-    .eq('id', item.id)
-    .eq('user_id', await userId())
-    .select('id')
-    .single()
+  const owner = await userId()
+  const { error } = item.isFavorite
+    ? await supabase
+        .from('prompt_favorites')
+        .delete()
+        .eq('prompt_id', item.id)
+        .eq('user_id', owner)
+    : await supabase.from('prompt_favorites').insert({ prompt_id: item.id, user_id: owner })
   if (error) throw error
 }
 export async function deletePrompt(id: string): Promise<void> {

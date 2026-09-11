@@ -43,6 +43,15 @@ export function UploadPage() {
         </Button>
       </main>
     )
+  if (id && item?.ownerId !== user.id)
+    return (
+      <main className="empty-state">
+        <h2>{t('You can only edit your own uploads.')}</h2>
+        <Button asChild>
+          <Link to="/">{t('Back to gallery')}</Link>
+        </Button>
+      </main>
+    )
   return (
     <main className="upload-page">
       <Link className="back-link" to="/">

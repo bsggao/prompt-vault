@@ -66,7 +66,7 @@ export function PromptForm({ item }: { item?: PromptItem }) {
       source: item?.source ?? 'Original',
       sourceUrl: item?.sourceUrl ?? '',
       notes: item?.notes ?? '',
-      isPublic: item?.isPublic ?? false,
+      isPublic: item?.isPublic ?? true,
       imageUrl: item?.imageUrl ?? '',
     },
   })
@@ -74,7 +74,11 @@ export function PromptForm({ item }: { item?: PromptItem }) {
   const isPublic = watch('isPublic')
   const submit = handleSubmit((values) => {
     save.mutate(
-      { input: { ...values, isFavorite: item?.isFavorite ?? false }, id: item?.id, file },
+      {
+        input: { ...values, isFavorite: item?.isFavorite ?? false },
+        id: item?.id,
+        file,
+      },
       { onSuccess: () => navigate('/') },
     )
   })
@@ -232,8 +236,8 @@ export function PromptForm({ item }: { item?: PromptItem }) {
               <strong>{isPublic ? t('Public prompt') : t('Just for you')}</strong>
               <span>
                 {isPublic
-                  ? t('Allow public access to this prompt')
-                  : t('Keep this prompt in your private vault')}
+                  ? t('Everyone can view it; only you can edit or delete it.')
+                  : t('Only you can view, edit, or delete it.')}
               </span>
             </div>
             <button

@@ -32,6 +32,7 @@ function App() {
       <Routes>
         <Route element={<AppLayout />}>
           <Route index element={<GalleryPage />} />
+          <Route path="mine" element={<GalleryPage mine />} />
           <Route path="favorites" element={<GalleryPage favorites />} />
           <Route path="upload" element={<UploadPage />} />
           <Route path="edit/:id" element={<UploadPage />} />

@@ -1,5 +1,6 @@
 export interface PromptItem {
   id: string
+  ownerId?: string
   title: string
   imageUrl: string
   prompt: string
@@ -17,7 +18,7 @@ export interface PromptItem {
   updatedAt: string
   collectionId?: string
 }
-export type PromptInput = Omit<PromptItem, 'id' | 'createdAt' | 'updatedAt'>
+export type PromptInput = Omit<PromptItem, 'id' | 'ownerId' | 'createdAt' | 'updatedAt'>
 export interface Collection {
   id: string
   name: string

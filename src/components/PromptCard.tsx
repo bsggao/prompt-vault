@@ -9,12 +9,14 @@ export function PromptCard({
   onOpen,
   onFavorite,
   favoritePending,
+  canFavorite,
 }: {
   item: PromptItem
   index: number
   onOpen: () => void
   onFavorite: () => void
   favoritePending: boolean
+  canFavorite: boolean
 }) {
   const { t } = useI18n()
 
@@ -41,15 +43,17 @@ export function PromptCard({
           >
             {copied ? <Check size={16} /> : <Copy size={16} />}
           </button>
-          <button
-            disabled={favoritePending}
-            onClick={onFavorite}
-            aria-label={t(item.isFavorite ? 'Unfavorite {title}' : 'Favorite {title}', {
-              title: item.title,
-            })}
-          >
-            <Heart size={16} fill={item.isFavorite ? 'currentColor' : 'none'} />
-          </button>
+          {canFavorite && (
+            <button
+              disabled={favoritePending}
+              onClick={onFavorite}
+              aria-label={t(item.isFavorite ? 'Unfavorite {title}' : 'Favorite {title}', {
+                title: item.title,
+              })}
+            >
+              <Heart size={16} fill={item.isFavorite ? 'currentColor' : 'none'} />
+            </button>
+          )}
         </div>
       </div>
       <div className="card-content">
@@ -68,19 +72,21 @@ export function PromptCard({
           ))}
         </div>
         <div className="card-footer">
-          <button
-            className={`favorite-button ${item.isFavorite ? 'is-favorite' : ''}`}
-            disabled={favoritePending}
-            onClick={onFavorite}
-            aria-label={t(
-              item.isFavorite ? 'Remove {title} from favorites' : 'Save {title} to favorites',
-              { title: item.title },
-            )}
-            aria-pressed={item.isFavorite}
-          >
-            <Heart size={16} fill={item.isFavorite ? 'currentColor' : 'none'} />
-            <span>{item.isFavorite ? t('Saved') : t('Save')}</span>
-          </button>
+          {canFavorite && (
+            <button
+              className={`favorite-button ${item.isFavorite ? 'is-favorite' : ''}`}
+              disabled={favoritePending}
+              onClick={onFavorite}
+              aria-label={t(
+                item.isFavorite ? 'Remove {title} from favorites' : 'Save {title} to favorites',
+                { title: item.title },
+              )}
+              aria-pressed={item.isFavorite}
+            >
+              <Heart size={16} fill={item.isFavorite ? 'currentColor' : 'none'} />
+              <span>{item.isFavorite ? t('Saved') : t('Save')}</span>
+            </button>
+          )}
           <button
             className="card-copy"
             onClick={() => copy(item.prompt)}

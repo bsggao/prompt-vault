@@ -13,14 +13,24 @@ import { GallerySkeleton } from '../components/GallerySkeleton'
 import { Button } from '../components/ui/button'
 import { useAuth } from '../hooks/useAuth'
 import { CloudAccess } from '../components/CloudAccess'
-export function GalleryPage({ favorites = false }: { favorites?: boolean }) {
+export function GalleryPage({
+  favorites = false,
+  mine = false,
+}: {
+  favorites?: boolean
+  mine?: boolean
+}) {
   const { t } = useI18n()
 
   const { items, isLoading, error, refetch, favorite } = usePrompts()
   const ui = useUI()
   const { user } = useAuth()
   const [selected, setSelected] = useState<string | null>(null)
-  const filtered = filterPrompts(items, ui, favorites)
+  const filtered = filterPrompts(
+    mine ? items.filter((item) => item.ownerId === user?.id) : items,
+    ui,
+    favorites,
+  )
   const current = items.find((p) => p.id === selected)
   const hasFilters =
     !!ui.search || ui.category !== 'All' || ui.model !== 'All' || ui.ratio !== 'All'
@@ -32,9 +42,9 @@ export function GalleryPage({ favorites = false }: { favorites?: boolean }) {
             <span /> {t('YOUR CREATIVE LIBRARY')}{' '}
           </div>
           <h1>
-            {favorites ? (
+            {favorites || mine ? (
               <>
-                {t('Your favorites.')} <br />
+                {t(favorites ? 'Your favorites.' : 'Your uploads.')} <br />
                 {t('Always close.')}{' '}
               </>
             ) : (
@@ -47,8 +57,12 @@ export function GalleryPage({ favorites = false }: { favorites?: boolean }) {
             )}
           </h1>
           <p>
-            {favorites
-              ? t('The ideas you love, all in one place. Ready whenever inspiration strikes.')
+            {favorites || mine
+              ? t(
+                  favorites
+                    ? 'The ideas you love, all in one place. Ready whenever inspiration strikes.'
+                    : 'Everything you have uploaded, public and private, in one place.',
+                )
               : t(
                   'A home for your favorite AI images and the prompts behind them. Collect, organize, and create something great.',
                 )}
@@ -94,7 +108,11 @@ export function GalleryPage({ favorites = false }: { favorites?: boolean }) {
               {favorites ? t('THE ONES YOU LOVE') : t('LESS SCROLLING. MORE CREATING.')}
             </p>
             <h2>
-              {favorites ? t('My favorites') : t('A world of inspiration')}
+              {favorites
+                ? t('My favorites')
+                : mine
+                  ? t('My uploads')
+                  : t('A world of inspiration')}
               <span className="heading-sparkle">✳</span>
             </h2>
           </div>
@@ -105,7 +123,7 @@ export function GalleryPage({ favorites = false }: { favorites?: boolean }) {
         <Filters count={filtered.length} />
         {isLoading ? (
           <GallerySkeleton />
-        ) : !user ? (
+        ) : (favorites || mine) && !user ? (
           <CloudAccess />
         ) : error ? (
           <div className="empty-state">
@@ -119,6 +137,7 @@ export function GalleryPage({ favorites = false }: { favorites?: boolean }) {
             onOpen={(p) => setSelected(p.id)}
             onFavorite={(p) => favorite.mutate(p)}
             favoritePending={favorite.isPending}
+            ownerId={user?.id}
           />
         ) : (
           <EmptyState filtered={hasFilters} favorites={favorites} />

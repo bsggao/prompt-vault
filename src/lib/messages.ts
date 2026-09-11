@@ -55,6 +55,10 @@ export const zh: Record<string, string> = {
     '云端登录暂不可用，请先完成项目连接。',
   'Your images and prompts are stored in the cloud, accessible only to you by default.':
     '图片与提示词保存到云端，默认仅自己可见。',
+  'Uploads are public for everyone to view. Only you can edit or delete your uploads.':
+    '上传内容所有人都可以查看，只有你可以编辑或删除自己上传的内容。',
+  'Choose whether each upload is public or private. Only you can edit your uploads.':
+    '每次上传都可以选择公开或私有，只有你可以编辑自己的内容。',
   'Sign-out failed. Please try again.': '退出登录失败，请重试。',
   'Sign-in could not be completed. Please try again.': '登录未能完成，请重试。',
   Gallery: '画廊',
@@ -206,6 +210,15 @@ export const zh: Record<string, string> = {
   'Allow public access to this prompt': '允许其他人访问这条提示词',
   'Keep this prompt in your private vault': '将这条提示词保存在私人灵感库中',
   'Make this prompt public': '公开这条提示词',
+  'Everyone can view it; only you can edit or delete it.':
+    '所有人都可以查看，只有你可以编辑或删除。',
+  'Only you can view, edit, or delete it.': '只有你可以查看、编辑或删除。',
+  'You can only edit your own uploads.': '你只能编辑自己上传的内容。',
+  Mine: '我的',
+  'Your uploads.': '我的上传。',
+  'My uploads': '我的上传',
+  'Everything you have uploaded, public and private, in one place.':
+    '你上传的公开与私有内容，都集中在这里。',
   'Saving…': '正在保存…',
   'Save changes': '保存修改',
   'Save prompt': '保存提示词',

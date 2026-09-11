@@ -18,6 +18,7 @@ import { useCopy } from '../hooks/useCopy'
 import { usePrompts } from '../hooks/usePrompts'
 import { Button } from './ui/button'
 import { Modal } from './ui/dialog'
+import { useAuth } from '../hooks/useAuth'
 function CopyBlock({ title, text }: { title: string; text: string }) {
   const { t } = useI18n()
 
@@ -52,7 +53,10 @@ export function PromptDetail({
   const { t, locale } = useI18n()
 
   const { copy, copied } = useCopy()
+  const { user } = useAuth()
   const { favorite, remove } = usePrompts()
+  const canEdit = !!user && item.ownerId === user.id
+  const canFavorite = !!user && (item.isPublic || canEdit)
   const [confirm, setConfirm] = useState(false)
   const index = items.findIndex((p) => p.id === item.id)
   const navigate = (delta: number) =>
@@ -95,7 +99,7 @@ export function PromptDetail({
               <p className="eyebrow">{t('A LITTLE INSPIRATION')}</p>
               <h2>{item.title}</h2>
             </div>
-            <button
+            {canFavorite && <button
               className={`detail-heart ${item.isFavorite ? 'is-favorite' : ''}`}
               disabled={favorite.isPending}
               onClick={() => favorite.mutate(item)}
@@ -103,7 +107,7 @@ export function PromptDetail({
               aria-pressed={item.isFavorite}
             >
               <Heart size={22} fill={item.isFavorite ? 'currentColor' : 'none'} />
-            </button>
+            </button>}
           </div>
           <div className="detail-badges">
             <span>
@@ -161,7 +165,7 @@ export function PromptDetail({
               {copied ? <Check size={15} /> : <Copy size={15} />}{' '}
               {copied ? t('Copied') : t('Copy prompt')}
             </Button>
-            <Button variant="outline" asChild>
+            {canEdit && <><Button variant="outline" asChild>
               <Link to={`/edit/${item.id}`}>
                 <Pencil size={14} />
                 {t('Edit')}{' '}
@@ -170,7 +174,7 @@ export function PromptDetail({
             <Button variant="destructive" onClick={() => setConfirm(true)}>
               <Trash2 size={14} />
               {t('Delete')}{' '}
-            </Button>
+            </Button></>}
           </div>
         </div>
       </Modal>

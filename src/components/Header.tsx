@@ -38,6 +38,11 @@ export function Header() {
           <NavLink to="/" end onClick={resetFilters}>
             {t('Gallery')}{' '}
           </NavLink>
+          {user && (
+            <NavLink to="/mine" onClick={resetFilters}>
+              {t('Mine')}{' '}
+            </NavLink>
+          )}
           <NavLink to="/favorites" onClick={resetFilters}>
             {t('Favorites')}{' '}
           </NavLink>
