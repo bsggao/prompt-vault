@@ -7,6 +7,7 @@ import {
   Heart,
   Pencil,
   Sparkles,
+  Share2,
   Trash2,
   ExternalLink,
 } from 'lucide-react'
@@ -19,6 +20,7 @@ import { usePrompts } from '../hooks/usePrompts'
 import { Button } from './ui/button'
 import { Modal } from './ui/dialog'
 import { useAuth } from '../hooks/useAuth'
+import { useUI } from '../store/ui'
 function CopyBlock({ title, text }: { title: string; text: string }) {
   const { t } = useI18n()
 
@@ -53,14 +55,42 @@ export function PromptDetail({
   const { t, locale } = useI18n()
 
   const { copy, copied } = useCopy()
+  const { copy: copyShareLink } = useCopy()
   const { user } = useAuth()
   const { favorite, remove } = usePrompts()
   const canEdit = !!user && item.ownerId === user.id
-  const canFavorite = !!user && (item.isPublic || canEdit)
+  const canFavorite = item.isPublic || canEdit
+  const setAuthOpen = useUI((state) => state.setAuthOpen)
+  const setPendingFavoriteId = useUI((state) => state.setPendingFavoriteId)
   const [confirm, setConfirm] = useState(false)
   const index = items.findIndex((p) => p.id === item.id)
   const navigate = (delta: number) =>
     onNavigate(items[(index + delta + items.length) % items.length].id)
+  const handleFavorite = () => {
+    if (!user) {
+      setPendingFavoriteId(item.id)
+      setAuthOpen(true)
+      return
+    }
+    favorite.mutate(item)
+  }
+  const sharePrompt = async () => {
+    const url = new URL('/', window.location.origin)
+    url.searchParams.set('prompt', item.id)
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: item.title,
+          text: t('Discover this prompt on PromptVault'),
+          url: url.href,
+        })
+        return
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return
+      }
+    }
+    await copyShareLink(url.href, 'Link copied')
+  }
   return (
     <>
       <Modal
@@ -70,7 +100,7 @@ export function PromptDetail({
         className="detail-modal"
       >
         <div className="detail-image">
-          <img src={item.imageUrl} alt={item.title} />
+          <img src={item.imageUrl} alt={item.title} decoding="async" />
           {items.length > 1 && (
             <>
               <button
@@ -99,15 +129,17 @@ export function PromptDetail({
               <p className="eyebrow">{t('A LITTLE INSPIRATION')}</p>
               <h2>{item.title}</h2>
             </div>
-            {canFavorite && <button
-              className={`detail-heart ${item.isFavorite ? 'is-favorite' : ''}`}
-              disabled={favorite.isPending}
-              onClick={() => favorite.mutate(item)}
-              aria-label={item.isFavorite ? t('Remove from favorites') : t('Add to favorites')}
-              aria-pressed={item.isFavorite}
-            >
-              <Heart size={22} fill={item.isFavorite ? 'currentColor' : 'none'} />
-            </button>}
+            {canFavorite && (
+              <button
+                className={`detail-heart ${item.isFavorite ? 'is-favorite' : ''}`}
+                disabled={favorite.isPending && favorite.variables?.id === item.id}
+                onClick={handleFavorite}
+                aria-label={item.isFavorite ? t('Remove from favorites') : t('Add to favorites')}
+                aria-pressed={item.isFavorite}
+              >
+                <Heart size={22} fill={item.isFavorite ? 'currentColor' : 'none'} />
+              </button>
+            )}
           </div>
           <div className="detail-badges">
             <span>
@@ -165,16 +197,26 @@ export function PromptDetail({
               {copied ? <Check size={15} /> : <Copy size={15} />}{' '}
               {copied ? t('Copied') : t('Copy prompt')}
             </Button>
-            {canEdit && <><Button variant="outline" asChild>
-              <Link to={`/edit/${item.id}`}>
-                <Pencil size={14} />
-                {t('Edit')}{' '}
-              </Link>
-            </Button>
-            <Button variant="destructive" onClick={() => setConfirm(true)}>
-              <Trash2 size={14} />
-              {t('Delete')}{' '}
-            </Button></>}
+            {item.isPublic && (
+              <Button variant="outline" onClick={() => void sharePrompt()}>
+                <Share2 size={15} />
+                {t('Share')}
+              </Button>
+            )}
+            {canEdit && (
+              <>
+                <Button variant="outline" asChild>
+                  <Link to={`/edit/${item.id}`}>
+                    <Pencil size={14} />
+                    {t('Edit')}{' '}
+                  </Link>
+                </Button>
+                <Button variant="destructive" onClick={() => setConfirm(true)}>
+                  <Trash2 size={14} />
+                  {t('Delete')}{' '}
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </Modal>

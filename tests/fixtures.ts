@@ -36,9 +36,9 @@ export async function mockCloud(page: Page, authenticated = true) {
     },
     { authenticated, value: session() },
   )
-  let rows = seedPrompts.map((p) => ({
+  let rows = seedPrompts.map((p, index) => ({
     id: p.id,
-    user_id: testUser.id,
+    user_id: index === 1 ? '22222222-2222-4222-8222-222222222222' : testUser.id,
     title: p.title,
     image_url: `${testUser.id}/${p.id}.jpg`,
     prompt: p.prompt,
@@ -51,10 +51,13 @@ export async function mockCloud(page: Page, authenticated = true) {
     source_url: p.sourceUrl,
     notes: p.notes,
     is_favorite: p.isFavorite,
-    is_public: p.isPublic,
+    is_public: true,
     created_at: p.createdAt,
     updated_at: p.updatedAt,
   }))
+  const favoriteIds = new Set(
+    seedPrompts.filter((prompt) => prompt.isFavorite).map((prompt) => prompt.id),
+  )
   const images = new Map<string, { bytes: Buffer; contentType: string }>()
   await page.route('https://promptvault-test.supabase.co/**', async (route) => {
     const request = route.request()
@@ -96,6 +99,15 @@ export async function mockCloud(page: Page, authenticated = true) {
       if (request.postDataJSON().token !== '123456')
         return json({ code: 'otp_expired', msg: 'Token has expired or is invalid' }, 403)
       return json(session())
+    }
+    if (pathname.startsWith('/rest/v1/prompt_favorites')) {
+      const promptId = url.searchParams.get('prompt_id')?.replace(/^eq\./, '')
+      if (method === 'POST') {
+        const body = request.postDataJSON() as { prompt_id: string }
+        favoriteIds.add(body.prompt_id)
+      }
+      if (method === 'DELETE' && promptId) favoriteIds.delete(promptId)
+      return json([...favoriteIds].map((prompt_id) => ({ prompt_id })))
     }
     if (pathname.startsWith('/rest/v1/prompts')) {
       const id = url.searchParams.get('id')?.replace(/^eq\./, '')

@@ -120,7 +120,7 @@ test('Chinese mobile forms support password visibility, switching and delivery f
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/')
   await page.getByRole('button', { name: '切换为中文' }).click()
-  await page.getByRole('button', { name: '登录后继续' }).click()
+  await page.getByRole('button', { name: '打开账户' }).click()
   await page.getByLabel('邮箱', { exact: true }).fill('creator@example.test')
   await page.getByLabel('密码', { exact: true }).fill('Test-password-123')
   await page.getByRole('button', { name: '显示密码' }).click()

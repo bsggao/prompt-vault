@@ -1,13 +1,12 @@
-import { useState } from 'react'
 import { Cloud } from 'lucide-react'
 import { useI18n } from '../lib/i18n'
 import { supabase } from '../lib/supabase'
-import { AuthDialog } from './AuthDialog'
 import { Button } from './ui/button'
+import { useUI } from '../store/ui'
 
 export function CloudAccess() {
   const { t } = useI18n()
-  const [open, setOpen] = useState(false)
+  const setAuthOpen = useUI((state) => state.setAuthOpen)
   return (
     <div className="empty-state cloud-access">
       <div className="empty-icon">
@@ -21,8 +20,7 @@ export function CloudAccess() {
             : 'Cloud storage is not configured yet.',
         )}
       </p>
-      <Button onClick={() => setOpen(true)}>{t('Sign in to continue')}</Button>
-      <AuthDialog open={open} onOpenChange={setOpen} />
+      <Button onClick={() => setAuthOpen(true)}>{t('Sign in to continue')}</Button>
     </div>
   )
 }

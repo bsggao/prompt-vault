@@ -29,9 +29,11 @@ type Mode = 'login' | 'register' | 'recovery'
 export function AuthDialog({
   open,
   onOpenChange,
+  onAuthenticated,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
+  onAuthenticated?: () => void
 }) {
   const { t } = useI18n()
   const { user } = useAuth()
@@ -87,11 +89,12 @@ export function AuthDialog({
       setBusy(false)
     }
   }
-  function complete(message = 'Welcome to your vault') {
+  function complete(message = 'Welcome to your vault', authenticated = true) {
     setPassword('')
     setCode('')
     setSentTo('')
     setMode('login')
+    if (authenticated) onAuthenticated?.()
     onOpenChange(false)
     toast.success(t(message))
   }
@@ -310,7 +313,7 @@ export function AuthDialog({
               void perform(async () => {
                 const { error } = await supabase!.auth.signOut()
                 if (error) throw error
-                complete('Signed out')
+                complete('Signed out', false)
               })
             }
           >

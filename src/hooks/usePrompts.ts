@@ -2,7 +2,7 @@ import { t } from '../lib/i18n'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { deletePrompt, getPrompts, savePrompt, toggleFavorite } from '../services/prompts'
-import type { PromptInput } from '../types/prompt'
+import type { PromptInput, PromptItem } from '../types/prompt'
 import { useAuth } from './useAuth'
 import { supabase } from '../lib/supabase'
 export function usePrompts() {
@@ -13,9 +13,9 @@ export function usePrompts() {
     queryKey,
     queryFn: getPrompts,
     enabled: ready && !!supabase,
-    staleTime: 60_000,
+    staleTime: 10 * 60_000,
     refetchInterval: 30 * 60_000,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
   })
   const refresh = () => client.invalidateQueries({ queryKey })
   const save = useMutation({
@@ -29,8 +29,20 @@ export function usePrompts() {
   })
   const favorite = useMutation({
     mutationFn: toggleFavorite,
-    onSuccess: refresh,
-    onError: (error) => toast.error(t(error.message)),
+    onMutate: async (item) => {
+      await client.cancelQueries({ queryKey })
+      const previous = client.getQueryData<PromptItem[]>(queryKey)
+      client.setQueryData<PromptItem[]>(queryKey, (current = []) =>
+        current.map((prompt) =>
+          prompt.id === item.id ? { ...prompt, isFavorite: !prompt.isFavorite } : prompt,
+        ),
+      )
+      return { previous }
+    },
+    onError: (error, _item, context) => {
+      if (context?.previous) client.setQueryData(queryKey, context.previous)
+      toast.error(t(error.message))
+    },
     scope: { id: 'favorites' },
   })
   const remove = useMutation({

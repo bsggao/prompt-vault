@@ -8,10 +8,13 @@ export function AppLayout() {
 
   return (
     <>
+      <a className="skip-link" href="#main-content">
+        {t('Skip to content')}
+      </a>
       <Header />
       <Suspense
         fallback={
-          <main className="upload-page">
+          <main id="main-content" className="upload-page">
             <GallerySkeleton />
           </main>
         }

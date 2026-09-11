@@ -1,5 +1,5 @@
 import { useI18n } from '../lib/i18n'
-import { ArrowUpRight, Check, Copy, Heart, Sparkles } from 'lucide-react'
+import { ArrowUpRight, Check, Copy, Globe2, Heart, LockKeyhole, Sparkles } from 'lucide-react'
 import type { PromptItem } from '../types/prompt'
 import { useCopy } from '../hooks/useCopy'
 import { useUI } from '../store/ui'
@@ -10,6 +10,7 @@ export function PromptCard({
   onFavorite,
   favoritePending,
   canFavorite,
+  showVisibility,
 }: {
   item: PromptItem
   index: number
@@ -17,6 +18,7 @@ export function PromptCard({
   onFavorite: () => void
   favoritePending: boolean
   canFavorite: boolean
+  showVisibility: boolean
 }) {
   const { t } = useI18n()
 
@@ -24,15 +26,29 @@ export function PromptCard({
   const set = useUI((s) => s.set)
   return (
     <article className="prompt-card" style={{ animationDelay: `${Math.min(index, 8) * 35}ms` }}>
-      <div className={`card-image image-shape-${index % 6}`}>
+      <div className="card-image">
         <button
           className="image-open"
           onClick={onOpen}
           aria-label={t('View {title}', { title: item.title })}
         >
-          <img src={item.imageUrl} alt={item.title} loading={index < 4 ? 'eager' : 'lazy'} />
+          <img
+            src={item.imageUrl}
+            alt={item.title}
+            loading={index < 2 ? 'eager' : 'lazy'}
+            fetchPriority={index === 0 ? 'high' : 'auto'}
+            decoding="async"
+          />
         </button>
-        <span className="image-category">{t(item.category)}</span>
+        <div className="card-badges">
+          <span className="image-category">{t(item.category)}</span>
+          {showVisibility && (
+            <span className={`visibility-badge ${item.isPublic ? 'is-public' : 'is-private'}`}>
+              {item.isPublic ? <Globe2 size={12} /> : <LockKeyhole size={12} />}
+              {t(item.isPublic ? 'Public' : 'Only you')}
+            </span>
+          )}
+        </div>
         <div className="image-hover">
           <button onClick={onOpen}>
             {t('View prompt')} <ArrowUpRight size={16} />
@@ -47,6 +63,7 @@ export function PromptCard({
             <button
               disabled={favoritePending}
               onClick={onFavorite}
+              aria-busy={favoritePending}
               aria-label={t(item.isFavorite ? 'Unfavorite {title}' : 'Favorite {title}', {
                 title: item.title,
               })}
@@ -77,6 +94,7 @@ export function PromptCard({
               className={`favorite-button ${item.isFavorite ? 'is-favorite' : ''}`}
               disabled={favoritePending}
               onClick={onFavorite}
+              aria-busy={favoritePending}
               aria-label={t(
                 item.isFavorite ? 'Remove {title} from favorites' : 'Save {title} to favorites',
                 { title: item.title },

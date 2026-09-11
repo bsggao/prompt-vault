@@ -5,11 +5,11 @@ export function useCopy() {
   const [copied, setCopied] = useState(false)
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   useEffect(() => () => clearTimeout(timer.current), [])
-  async function copy(text: string) {
+  async function copy(text: string, successMessage = 'Prompt copied') {
     try {
       await navigator.clipboard.writeText(text)
       setCopied(true)
-      toast.success(t('Prompt copied'))
+      toast.success(t(successMessage))
       clearTimeout(timer.current)
       timer.current = setTimeout(() => setCopied(false), 2000)
     } catch {

@@ -39,12 +39,12 @@ function App() {
           <Route
             path="*"
             element={
-              <div className="empty-state">
+              <main id="main-content" className="empty-state">
                 <h1>{t('Page not found.')}</h1>
                 <a href="/" className="button button-primary">
                   {t('Back to gallery')}{' '}
                 </a>
-              </div>
+              </main>
             }
           />
         </Route>

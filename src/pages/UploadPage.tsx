@@ -16,19 +16,19 @@ export function UploadPage() {
   const item = items.find((p) => p.id === id)
   if (!ready || (id && isLoading))
     return (
-      <main className="upload-page">
+      <main id="main-content" className="upload-page">
         <GallerySkeleton />
       </main>
     )
   if (!user)
     return (
-      <main className="upload-page">
+      <main id="main-content" className="upload-page">
         <CloudAccess />
       </main>
     )
   if (id && error)
     return (
-      <main className="empty-state">
+      <main id="main-content" className="empty-state">
         <h2>{t('Unable to load this prompt.')}</h2>
         <p>{t(error.message)}</p>
         <Button onClick={() => refetch()}>{t('Try again')}</Button>
@@ -36,7 +36,7 @@ export function UploadPage() {
     )
   if (id && !item)
     return (
-      <main className="empty-state">
+      <main id="main-content" className="empty-state">
         <h2>{t('Prompt not found.')}</h2>
         <Button asChild>
           <Link to="/">{t('Back to gallery')}</Link>
@@ -45,7 +45,7 @@ export function UploadPage() {
     )
   if (id && item?.ownerId !== user.id)
     return (
-      <main className="empty-state">
+      <main id="main-content" className="empty-state">
         <h2>{t('You can only edit your own uploads.')}</h2>
         <Button asChild>
           <Link to="/">{t('Back to gallery')}</Link>
@@ -53,7 +53,7 @@ export function UploadPage() {
       </main>
     )
   return (
-    <main className="upload-page">
+    <main id="main-content" className="upload-page">
       <Link className="back-link" to="/">
         <ArrowLeft size={15} />
         {t('Back to gallery')}{' '}

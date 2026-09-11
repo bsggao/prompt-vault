@@ -1,18 +1,21 @@
 import { useI18n } from '../lib/i18n'
-import { useState } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { ArrowUpRight, FolderHeart, Plus, Sparkles } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { usePrompts } from '../hooks/usePrompts'
 import { useUI } from '../store/ui'
 import { filterPrompts } from '../utils/filterPrompts'
 import { Filters } from '../components/Filters'
 import { PromptGrid } from '../components/PromptGrid'
-import { PromptDetail } from '../components/PromptDetail'
 import { EmptyState } from '../components/EmptyState'
 import { GallerySkeleton } from '../components/GallerySkeleton'
 import { Button } from '../components/ui/button'
 import { useAuth } from '../hooks/useAuth'
 import { CloudAccess } from '../components/CloudAccess'
+
+const PromptDetail = lazy(() =>
+  import('../components/PromptDetail').then((module) => ({ default: module.PromptDetail })),
+)
 export function GalleryPage({
   favorites = false,
   mine = false,
@@ -22,20 +25,49 @@ export function GalleryPage({
 }) {
   const { t } = useI18n()
 
-  const { items, isLoading, error, refetch, favorite } = usePrompts()
+  const { items, isLoading, isSuccess, error, refetch, favorite } = usePrompts()
   const ui = useUI()
   const { user } = useAuth()
-  const [selected, setSelected] = useState<string | null>(null)
-  const filtered = filterPrompts(
-    mine ? items.filter((item) => item.ownerId === user?.id) : items,
-    ui,
-    favorites,
-  )
+  const [searchParams, setSearchParams] = useSearchParams()
+  const selected = searchParams.get('prompt')
+  const pendingFavoriteId = useUI((state) => state.pendingFavoriteId)
+  const setPendingFavoriteId = useUI((state) => state.setPendingFavoriteId)
+  const setAuthOpen = useUI((state) => state.setAuthOpen)
+  const scopedItems = favorites
+    ? items
+    : mine
+      ? items.filter((item) => item.ownerId === user?.id)
+      : items.filter((item) => item.isPublic)
+  const filtered = filterPrompts(scopedItems, ui, favorites)
   const current = items.find((p) => p.id === selected)
   const hasFilters =
     !!ui.search || ui.category !== 'All' || ui.model !== 'All' || ui.ratio !== 'All'
+  const selectPrompt = (id: string | null, replace = false) => {
+    const next = new URLSearchParams(searchParams)
+    if (id) next.set('prompt', id)
+    else next.delete('prompt')
+    setSearchParams(next, { replace })
+  }
+  const handleFavorite = (item: (typeof items)[number]) => {
+    if (!user) {
+      setPendingFavoriteId(item.id)
+      setAuthOpen(true)
+      return
+    }
+    favorite.mutate(item)
+  }
+  useEffect(() => {
+    if (!user || !pendingFavoriteId || favorite.isPending) return
+    const item = items.find((prompt) => prompt.id === pendingFavoriteId)
+    if (!item) {
+      if (isSuccess) setPendingFavoriteId(null)
+      return
+    }
+    setPendingFavoriteId(null)
+    if (!item.isFavorite) favorite.mutate(item)
+  }, [favorite, isSuccess, items, pendingFavoriteId, setPendingFavoriteId, user])
   return (
-    <main className="gallery-layout">
+    <main id="main-content" className="gallery-layout">
       <aside className="intro">
         <div>
           <div className="intro-kicker">
@@ -108,12 +140,8 @@ export function GalleryPage({
               {favorites ? t('THE ONES YOU LOVE') : t('LESS SCROLLING. MORE CREATING.')}
             </p>
             <h2>
-              {favorites
-                ? t('My favorites')
-                : mine
-                  ? t('My uploads')
-                  : t('A world of inspiration')}
-              <span className="heading-sparkle">✳</span>
+              {favorites ? t('My favorites') : mine ? t('My uploads') : t('A world of inspiration')}
+              <Sparkles className="heading-sparkle" size={20} aria-hidden="true" />
             </h2>
           </div>
           <span className="gallery-subtitle">
@@ -134,10 +162,11 @@ export function GalleryPage({
         ) : filtered.length ? (
           <PromptGrid
             items={filtered}
-            onOpen={(p) => setSelected(p.id)}
-            onFavorite={(p) => favorite.mutate(p)}
-            favoritePending={favorite.isPending}
+            onOpen={(p) => selectPrompt(p.id)}
+            onFavorite={handleFavorite}
+            favoritePendingId={favorite.isPending ? favorite.variables?.id : undefined}
             ownerId={user?.id}
+            showVisibility={mine}
           />
         ) : (
           <EmptyState filtered={hasFilters} favorites={favorites} />
@@ -152,12 +181,14 @@ export function GalleryPage({
         )}
       </section>
       {current && (
-        <PromptDetail
-          item={current}
-          items={filtered.some((p) => p.id === current.id) ? filtered : [current]}
-          onClose={() => setSelected(null)}
-          onNavigate={setSelected}
-        />
+        <Suspense fallback={null}>
+          <PromptDetail
+            item={current}
+            items={filtered.some((p) => p.id === current.id) ? filtered : [current]}
+            onClose={() => selectPrompt(null, true)}
+            onNavigate={(id) => selectPrompt(id, true)}
+          />
+        </Suspense>
       )}
     </main>
   )

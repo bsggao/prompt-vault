@@ -56,21 +56,22 @@ export async function getPrompts(): Promise<PromptItem[]> {
   const {
     data: { session },
   } = await supabase.auth.getSession()
-  const { data, error } = await supabase
+  const promptRequest = supabase
     .from('prompts')
     .select('*')
     .order('created_at', { ascending: false })
+  const favoriteRequest = session
+    ? supabase.from('prompt_favorites').select('prompt_id')
+    : Promise.resolve({ data: [] as { prompt_id: string }[], error: null })
+  const [{ data, error }, { data: favorites, error: favoriteError }] = await Promise.all([
+    promptRequest,
+    favoriteRequest,
+  ])
   if (error) throw error
+  if (favoriteError) throw favoriteError
   const rows = data as PromptRow[]
   if (!rows.length) return []
-  let favoriteIds = new Set<string>()
-  if (session) {
-    const { data: favorites, error: favoriteError } = await supabase
-      .from('prompt_favorites')
-      .select('prompt_id')
-    if (favoriteError) throw favoriteError
-    favoriteIds = new Set((favorites ?? []).map((favorite) => favorite.prompt_id))
-  }
+  const favoriteIds = new Set((favorites ?? []).map((favorite) => favorite.prompt_id))
   const { data: urls, error: imageError } = await supabase.storage
     .from('prompt-images')
     .createSignedUrls(
@@ -130,11 +131,7 @@ export async function toggleFavorite(item: PromptItem): Promise<void> {
   const supabase = requireSupabase()
   const owner = await userId()
   const { error } = item.isFavorite
-    ? await supabase
-        .from('prompt_favorites')
-        .delete()
-        .eq('prompt_id', item.id)
-        .eq('user_id', owner)
+    ? await supabase.from('prompt_favorites').delete().eq('prompt_id', item.id).eq('user_id', owner)
     : await supabase.from('prompt_favorites').insert({ prompt_id: item.id, user_id: owner })
   if (error) throw error
 }

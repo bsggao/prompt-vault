@@ -1,20 +1,31 @@
 import { useI18n } from '../lib/i18n'
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef } from 'react'
 import { NavLink, Link } from 'react-router-dom'
 import { Plus, UserRound } from 'lucide-react'
 import { SearchBar } from './SearchBar'
 import { ThemeToggle } from './ThemeToggle'
 import { LanguageToggle } from './LanguageToggle'
 import { Button } from './ui/button'
-import { AuthDialog } from './AuthDialog'
 import { useAuth } from '../hooks/useAuth'
 import { useUI } from '../store/ui'
+
+const AuthDialog = lazy(() =>
+  import('./AuthDialog').then((module) => ({ default: module.AuthDialog })),
+)
 export function Header() {
   const { t } = useI18n()
 
-  const [accountOpen, setAccountOpen] = useState(false)
   const { user } = useAuth()
   const resetFilters = useUI((s) => s.resetFilters)
+  const accountOpen = useUI((s) => s.authOpen)
+  const setAccountOpen = useUI((s) => s.setAuthOpen)
+  const setPendingFavoriteId = useUI((s) => s.setPendingFavoriteId)
+  const preservePendingFavorite = useRef(false)
+  const handleAccountOpenChange = (open: boolean) => {
+    if (!open && !preservePendingFavorite.current) setPendingFavoriteId(null)
+    preservePendingFavorite.current = false
+    setAccountOpen(open)
+  }
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -70,7 +81,17 @@ export function Header() {
           </button>
         </div>
       </header>
-      <AuthDialog open={accountOpen} onOpenChange={setAccountOpen} />
+      {accountOpen && (
+        <Suspense fallback={null}>
+          <AuthDialog
+            open
+            onAuthenticated={() => {
+              preservePendingFavorite.current = true
+            }}
+            onOpenChange={handleAccountOpenChange}
+          />
+        </Suspense>
+      )}
     </>
   )
 }

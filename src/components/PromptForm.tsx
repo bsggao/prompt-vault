@@ -1,10 +1,17 @@
 import { useI18n } from '../lib/i18n'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Link, useNavigate } from 'react-router-dom'
-import { ArrowRight, LockKeyhole, Globe2, Loader2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import {
+  ArrowRight,
+  ChevronDown,
+  LockKeyhole,
+  Globe2,
+  Loader2,
+  SlidersHorizontal,
+} from 'lucide-react'
 import { categories, models, ratios, sources, type PromptItem } from '../types/prompt'
 import { ImageUploader } from './ImageUploader'
 import { TagInput } from './TagInput'
@@ -46,6 +53,8 @@ export function PromptForm({ item }: { item?: PromptItem }) {
   const navigate = useNavigate()
   const { save } = usePrompts()
   const [file, setFile] = useState<File>()
+  const [imageProcessing, setImageProcessing] = useState(false)
+  const advancedRef = useRef<HTMLDetailsElement>(null)
   const {
     register,
     control,
@@ -72,18 +81,30 @@ export function PromptForm({ item }: { item?: PromptItem }) {
   })
   const imageUrl = watch('imageUrl')
   const isPublic = watch('isPublic')
+  const showAdvancedByDefault = !!(
+    item?.negativePrompt ||
+    item?.model ||
+    item?.aspectRatio ||
+    item?.tags.length ||
+    item?.sourceUrl ||
+    item?.notes
+  )
+  useEffect(() => {
+    if (showAdvancedByDefault && advancedRef.current) advancedRef.current.open = true
+  }, [showAdvancedByDefault])
   const submit = handleSubmit((values) => {
+    if (imageProcessing) return
     save.mutate(
       {
         input: { ...values, isFavorite: item?.isFavorite ?? false },
         id: item?.id,
         file,
       },
-      { onSuccess: () => navigate('/') },
+      { onSuccess: () => navigate('/mine') },
     )
   })
   return (
-    <form className="prompt-form" onSubmit={submit}>
+    <form className="prompt-form" onSubmit={submit} aria-busy={imageProcessing || save.isPending}>
       <div className="form-image-column">
         <div className="form-section-label">
           <span>01</span> {t('THE IMAGE')}{' '}
@@ -94,6 +115,7 @@ export function PromptForm({ item }: { item?: PromptItem }) {
             setValue('imageUrl', url, { shouldValidate: true })
             setFile(newFile)
           }}
+          onProcessingChange={setImageProcessing}
         />
         {errors.imageUrl && (
           <p className="field-error" role="alert">
@@ -136,129 +158,165 @@ export function PromptForm({ item }: { item?: PromptItem }) {
             </span>
           )}
         </label>
-        <label>
-          {t('Negative prompt')} <span className="optional">{t('Optional')}</span>
-          <textarea
-            rows={2}
-            {...register('negativePrompt')}
-            placeholder={t('What should the AI avoid?')}
-          />
-          {errors.negativePrompt && (
-            <span className="field-error">{t(errors.negativePrompt.message ?? '')}</span>
+        <label className="primary-category">
+          {t('Category')} <span className="required">*</span>
+          <select {...register('category')} aria-invalid={!!errors.category}>
+            <option value="">{t('Select category')}</option>
+            {categories.map((c) => (
+              <option key={c} value={c}>
+                {t(c)}
+              </option>
+            ))}
+          </select>
+          {errors.category && (
+            <span role="alert" className="field-error">
+              {t(errors.category.message ?? '')}
+            </span>
           )}
         </label>
-        <div className="form-divider" />
-        <div className="form-row">
-          <label>
-            {t('Category')} <span className="required">*</span>
-            <select {...register('category')} aria-invalid={!!errors.category}>
-              <option value="">{t('Select category')}</option>
-              {categories.map((c) => (
-                <option key={c} value={c}>
-                  {t(c)}
-                </option>
-              ))}
-            </select>
-            {errors.category && (
-              <span role="alert" className="field-error">
-                {t(errors.category.message ?? '')}
-              </span>
-            )}
-          </label>
-          <label>
-            {t('AI model')}{' '}
-            <select {...register('model')}>
-              <option value="">{t('Select model')}</option>
-              {models.map((m) => (
-                <option key={m} value={m}>
-                  {t(m)}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-        <div className="form-row">
-          <label>
-            {t('Aspect ratio')}{' '}
-            <select {...register('aspectRatio')}>
-              <option value="">{t('Select ratio')}</option>
-              {ratios.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
-          </label>
-          <div className="field">
+        <details ref={advancedRef} className="advanced-fields">
+          <summary>
+            <span className="advanced-icon">
+              <SlidersHorizontal size={17} />
+            </span>
+            <span>
+              <strong>{t('More details')}</strong>
+              <small>{t('Model, ratio, tags, source and notes')}</small>
+            </span>
+            <ChevronDown className="advanced-chevron" size={18} />
+          </summary>
+          <div className="advanced-content">
             <label>
-              {t('Tags')} <span className="optional">{t('Up to 12')}</span>
+              {t('Negative prompt')} <span className="optional">{t('Optional')}</span>
+              <textarea
+                rows={2}
+                {...register('negativePrompt')}
+                placeholder={t('What should the AI avoid?')}
+              />
+              {errors.negativePrompt && (
+                <span role="alert" className="field-error">
+                  {t(errors.negativePrompt.message ?? '')}
+                </span>
+              )}
             </label>
-            <Controller
-              control={control}
-              name="tags"
-              render={({ field }) => <TagInput {...field} />}
-            />
-          </div>
-        </div>
-        <div className="form-row">
-          <label>
-            {t('Source')}{' '}
-            <select {...register('source')}>
-              {sources.map((s) => (
-                <option key={s} value={s}>
-                  {t(s)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            {t('Source URL')} <input {...register('sourceUrl')} placeholder="https://…" />
-            {errors.sourceUrl && (
-              <span role="alert" className="field-error">
-                {t(errors.sourceUrl.message ?? '')}
-              </span>
-            )}
-          </label>
-        </div>
-        <label>
-          {t('Notes')} <span className="optional">{t('Optional')}</span>
-          <textarea
-            rows={3}
-            {...register('notes')}
-            placeholder={t('Settings, variations, or a little note to your future self…')}
-          />
-          {errors.notes && <span className="field-error">{t(errors.notes.message ?? '')}</span>}
-        </label>
-        <div className="form-bottom">
-          <div className="privacy-setting">
-            {isPublic ? <Globe2 size={19} /> : <LockKeyhole size={19} />}
-            <div>
-              <strong>{isPublic ? t('Public prompt') : t('Just for you')}</strong>
-              <span>
-                {isPublic
-                  ? t('Everyone can view it; only you can edit or delete it.')
-                  : t('Only you can view, edit, or delete it.')}
-              </span>
+            <div className="form-row">
+              <label>
+                {t('AI model')}{' '}
+                <select {...register('model')}>
+                  <option value="">{t('Select model')}</option>
+                  {models.map((m) => (
+                    <option key={m} value={m}>
+                      {t(m)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                {t('Aspect ratio')}{' '}
+                <select {...register('aspectRatio')}>
+                  <option value="">{t('Select ratio')}</option>
+                  {ratios.map((r) => (
+                    <option key={r} value={r}>
+                      {r}
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={isPublic}
-              aria-label={t('Make this prompt public')}
-              className={`toggle ${isPublic ? 'on' : ''}`}
-              onClick={() => setValue('isPublic', !isPublic)}
-            >
-              <span />
-            </button>
+            <div className="field">
+              <label>
+                {t('Tags')} <span className="optional">{t('Up to 12')}</span>
+              </label>
+              <Controller
+                control={control}
+                name="tags"
+                render={({ field }) => <TagInput {...field} />}
+              />
+            </div>
+            <div className="form-row">
+              <label>
+                {t('Source')}{' '}
+                <select {...register('source')}>
+                  {sources.map((s) => (
+                    <option key={s} value={s}>
+                      {t(s)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                {t('Source URL')} <input {...register('sourceUrl')} placeholder="https://…" />
+                {errors.sourceUrl && (
+                  <span role="alert" className="field-error">
+                    {t(errors.sourceUrl.message ?? '')}
+                  </span>
+                )}
+              </label>
+            </div>
+            <label>
+              {t('Notes')} <span className="optional">{t('Optional')}</span>
+              <textarea
+                rows={3}
+                {...register('notes')}
+                placeholder={t('Settings, variations, or a little note to your future self…')}
+              />
+              {errors.notes && (
+                <span role="alert" className="field-error">
+                  {t(errors.notes.message ?? '')}
+                </span>
+              )}
+            </label>
           </div>
+        </details>
+        <div className="form-bottom">
+          <fieldset className="privacy-setting">
+            <legend>{t('Who can see this?')}</legend>
+            <div className="privacy-options">
+              <button
+                type="button"
+                className={isPublic ? 'selected' : ''}
+                aria-pressed={isPublic}
+                onClick={() => setValue('isPublic', true, { shouldDirty: true })}
+              >
+                <Globe2 size={19} />
+                <span>
+                  <strong>{t('Public prompt')}</strong>
+                  <small>{t('Everyone can view and favorite it.')}</small>
+                </span>
+              </button>
+              <button
+                type="button"
+                className={!isPublic ? 'selected' : ''}
+                aria-pressed={!isPublic}
+                onClick={() => setValue('isPublic', false, { shouldDirty: true })}
+              >
+                <LockKeyhole size={19} />
+                <span>
+                  <strong>{t('Just for you')}</strong>
+                  <small>{t('Only you can view and edit it.')}</small>
+                </span>
+              </button>
+            </div>
+          </fieldset>
           <div className="form-actions">
-            <Button variant="outline" asChild>
-              <Link to="/">{t('Cancel')}</Link>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={imageProcessing || save.isPending}
+              onClick={() => navigate(item ? '/mine' : '/')}
+            >
+              {t('Cancel')}
             </Button>
-            <Button type="submit" disabled={save.isPending}>
-              {save.isPending && <Loader2 size={16} className="spin" />}
-              {save.isPending ? t('Saving…') : item ? t('Save changes') : t('Save prompt')}
-              {!save.isPending && <ArrowRight size={16} />}
+            <Button type="submit" disabled={imageProcessing || save.isPending}>
+              {(imageProcessing || save.isPending) && <Loader2 size={16} className="spin" />}
+              {imageProcessing
+                ? t('Optimizing image…')
+                : save.isPending
+                  ? t('Saving…')
+                  : item
+                    ? t('Save changes')
+                    : t(isPublic ? 'Publish prompt' : 'Save privately')}
+              {!imageProcessing && !save.isPending && <ArrowRight size={16} />}
             </Button>
           </div>
         </div>

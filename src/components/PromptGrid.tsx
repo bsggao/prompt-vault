@@ -5,14 +5,16 @@ export function PromptGrid({
   items,
   onOpen,
   onFavorite,
-  favoritePending,
+  favoritePendingId,
   ownerId,
+  showVisibility = false,
 }: {
   items: PromptItem[]
   onOpen: (item: PromptItem) => void
   onFavorite: (item: PromptItem) => void
-  favoritePending: boolean
+  favoritePendingId?: string
   ownerId?: string
+  showVisibility?: boolean
 }) {
   const view = useUI((s) => s.view)
   return (
@@ -24,8 +26,9 @@ export function PromptGrid({
           index={index}
           onOpen={() => onOpen(item)}
           onFavorite={() => onFavorite(item)}
-          favoritePending={favoritePending}
-          canFavorite={!!ownerId && (item.isPublic || item.ownerId === ownerId)}
+          favoritePending={favoritePendingId === item.id}
+          canFavorite={item.isPublic || (!!ownerId && item.ownerId === ownerId)}
+          showVisibility={showVisibility}
         />
       ))}
     </div>

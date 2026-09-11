@@ -10,7 +10,7 @@ export function CategoryFilter() {
 
   const { category, set } = useUI()
   return (
-    <div className="category-filter" aria-label={t('Categories')}>
+    <div className="category-filter" role="group" aria-label={t('Categories')}>
       {['All', ...categories].map((c) => (
         <button
           key={c}
@@ -103,9 +103,13 @@ export function Filters({ count }: { count: number }) {
             value={state.sort}
             onChange={(e) => state.set({ sort: e.target.value })}
           >
-            {['Newest', 'Oldest', 'Favorites'].map((s) => (
-              <option key={s} value={s}>
-                {t(s)}
+            {[
+              { value: 'Newest', label: 'Newest' },
+              { value: 'Oldest', label: 'Oldest' },
+              { value: 'Favorites', label: 'Saved first' },
+            ].map(({ value, label }) => (
+              <option key={value} value={value}>
+                {t(label)}
               </option>
             ))}
           </select>
@@ -117,7 +121,7 @@ export function Filters({ count }: { count: number }) {
             <span>{t('Reset')}</span>
           </button>
         )}
-        <span className="prompt-count">
+        <span className="prompt-count" aria-live="polite">
           {count} <span>{t('prompts')}</span>
         </span>
         <div className="view-switch">

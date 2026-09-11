@@ -20,6 +20,7 @@ test('search, combined filters, detail, clipboard and favorites persist', async 
   await page.getByRole('searchbox').fill('85mm')
   await expect(page.locator('.prompt-card')).toHaveCount(1)
   await page.getByRole('button', { name: 'View Summer in bloom', exact: true }).click()
+  await expect(page).toHaveURL(/\?prompt=demo-1$/)
   const dialog = page.getByRole('dialog')
   await expect(dialog.getByRole('heading', { name: 'Summer in bloom' }).last()).toBeVisible()
   await dialog.getByRole('button', { name: 'Copy prompt', exact: true }).first().click()
@@ -44,9 +45,53 @@ test('search, combined filters, detail, clipboard and favorites persist', async 
   await page.getByRole('searchbox').fill('not-a-real-prompt')
   await expect(page.getByText('No prompts found.')).toBeVisible()
 })
+test('a signed-out visitor can browse public prompts and continue saving after sign-in', async ({
+  page,
+}) => {
+  await page.goto('/')
+  await page.evaluate(() => {
+    localStorage.removeItem('promptvault-auth')
+    sessionStorage.removeItem('promptvault-auth')
+    sessionStorage.setItem('mock-auth-initialized', 'true')
+  })
+  await page.reload()
+  await expect(page.locator('.prompt-card')).toHaveCount(12)
+  await page
+    .getByRole('button', { name: 'Save Somewhere on the Riviera to favorites', exact: true })
+    .click()
+  const auth = page.getByRole('dialog')
+  await expect(auth.getByRole('heading', { name: 'Welcome back' }).last()).toBeVisible()
+  await auth.getByLabel('Email', { exact: true }).fill('creator@example.test')
+  await auth.getByLabel('Password', { exact: true }).fill('Test-password-123')
+  await auth.getByRole('button', { name: 'Sign in', exact: true }).click()
+  await expect(
+    page.getByRole('button', { name: 'Remove Somewhere on the Riviera from favorites' }),
+  ).toBeVisible()
+})
+test('cancelling a favorite sign-in does not save it during a later sign-in', async ({ page }) => {
+  await page.goto('/')
+  await page.evaluate(() => {
+    localStorage.removeItem('promptvault-auth')
+    sessionStorage.removeItem('promptvault-auth')
+    sessionStorage.setItem('mock-auth-initialized', 'true')
+  })
+  await page.reload()
+  await page
+    .getByRole('button', { name: 'Save Somewhere on the Riviera to favorites', exact: true })
+    .click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Close dialog' }).click()
+  await page.getByRole('button', { name: 'Open account', exact: true }).click()
+  const auth = page.getByRole('dialog')
+  await auth.getByLabel('Email', { exact: true }).fill('creator@example.test')
+  await auth.getByLabel('Password', { exact: true }).fill('Test-password-123')
+  await auth.getByRole('button', { name: 'Sign in', exact: true }).click()
+  await expect(
+    page.getByRole('button', { name: 'Save Somewhere on the Riviera to favorites', exact: true }),
+  ).toBeVisible()
+})
 test('upload validation, tags, editing and confirmed deletion', async ({ page }) => {
   await page.goto('/upload')
-  await page.getByRole('button', { name: 'Save prompt', exact: true }).click()
+  await page.getByRole('button', { name: 'Publish prompt', exact: true }).click()
   await expect(page.getByText('Choose an image to continue.')).toBeVisible()
   await page.getByLabel('Upload image', { exact: true }).setInputFiles({
     name: 'sample.png',
@@ -62,16 +107,17 @@ test('upload validation, tags, editing and confirmed deletion', async ({ page })
     .getByLabel('Prompt', { exact: true })
     .fill('A carefully lit ceramic vase in a quiet studio.')
   await page.getByLabel('Category', { exact: false }).selectOption('Product')
+  await page.getByText('More details', { exact: true }).click()
   await page.getByRole('textbox', { name: 'Tags', exact: true }).fill('ceramic')
   await page.getByRole('textbox', { name: 'Tags', exact: true }).press('Enter')
-  await page.getByRole('button', { name: 'Save prompt', exact: true }).click()
-  await expect(page).toHaveURL('/')
-  await expect(page.locator('.prompt-card')).toHaveCount(13)
+  await page.getByRole('button', { name: 'Publish prompt', exact: true }).click()
+  await expect(page).toHaveURL('/mine')
+  await expect(page.locator('.prompt-card')).toHaveCount(12)
   await page.getByRole('button', { name: 'View Test inspiration', exact: true }).click()
   await page.getByRole('link', { name: 'Edit', exact: true }).click()
   await page.getByLabel('Title', { exact: false }).fill('Updated inspiration')
   await page.getByRole('button', { name: 'Save changes' }).click()
-  await expect(page).toHaveURL('/')
+  await expect(page).toHaveURL('/mine')
   await page.reload()
   await page.getByRole('button', { name: 'View Updated inspiration', exact: true }).click()
   await page.getByRole('button', { name: 'Delete', exact: true }).click()
@@ -81,7 +127,7 @@ test('upload validation, tags, editing and confirmed deletion', async ({ page })
   await page.getByRole('dialog').getByRole('button', { name: 'Delete', exact: true }).click()
   await page.getByRole('alertdialog').getByRole('button', { name: 'Delete', exact: true }).click()
   await expect(page.getByRole('dialog')).toHaveCount(0)
-  await expect(page.locator('.prompt-card')).toHaveCount(12)
+  await expect(page.locator('.prompt-card')).toHaveCount(11)
 })
 test('desktop screenshots, list layout and persistent dark mode', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
@@ -99,10 +145,16 @@ test('desktop screenshots, list layout and persistent dark mode', async ({ page 
   await page.getByRole('button', { name: 'View Summer in bloom', exact: true }).click()
   await settleImages(page)
   await page.screenshot({ path: 'artifacts/detail-desktop.png' })
-  await page.keyboard.press('Escape')
+  await page.getByRole('button', { name: 'Close dialog' }).click()
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await page.getByRole('button', { name: 'List view', exact: true }).click()
   await expect(page.locator('.list-view')).toBeVisible()
+  expect(
+    await page.locator('.prompt-grid').evaluate((element) => {
+      const columns = getComputedStyle(element).gridTemplateColumns
+      return columns === 'none' ? 0 : columns.split(' ').length
+    }),
+  ).toBe(2)
   await page.getByRole('button', { name: 'Grid view', exact: true }).click()
   await page.getByRole('button', { name: 'Switch to dark mode' }).click()
   await page.reload()
@@ -115,12 +167,12 @@ test('desktop screenshots, list layout and persistent dark mode', async ({ page 
   await page.screenshot({ path: 'artifacts/upload-dark.png', fullPage: true })
   expect(errors).toEqual([])
 })
-test('mobile two-column layout, filter drawer and full-screen detail', async ({ page }) => {
+test('mobile two-column layout, filter drawer and readable detail', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/')
   await expect(page.locator('.prompt-card')).toHaveCount(12)
-  await expect(page.locator('.prompt-grid')).toHaveCSS('column-count', '2')
+  await expect(page.locator('.prompt-grid')).toHaveCSS('display', 'grid')
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   )
