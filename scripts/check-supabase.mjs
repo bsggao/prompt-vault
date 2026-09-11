@@ -18,7 +18,10 @@ try {
   if (!settings.ok) throw new Error(`Auth settings check failed (HTTP ${settings.status}).`)
   const auth = await settings.json()
   console.log('Project Auth API: reachable')
-  console.log(`Google provider: ${auth.external?.google ? 'enabled' : 'not enabled'}`)
+  console.log(`Email provider: ${auth.external?.email ? 'enabled' : 'not enabled'}`)
+  console.log(
+    `Email confirmation: ${auth.mailer_autoconfirm === false ? 'required' : 'not required; enable Confirm email for registration verification'}`,
+  )
   const table = await fetch(new URL('/rest/v1/prompts?select=id&limit=0', url), {
     headers,
     signal: AbortSignal.timeout(15000),
@@ -29,9 +32,9 @@ try {
     )
   console.log('Prompts table: reachable')
   console.log(
-    'A real Google login is still required to verify private image uploads and account isolation.',
+    'Real registration and password login are still required to verify delivery, private image uploads and account isolation. Check Confirm signup / Reset password email templates and SMTP in the dashboard.',
   )
-  if (!auth.external?.google) process.exitCode = 1
+  if (!auth.external?.email) process.exitCode = 1
 } catch (error) {
   console.error(error instanceof Error ? error.message : 'Connection check failed.')
   process.exitCode = 1

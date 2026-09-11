@@ -6,7 +6,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'sonner'
 import { AppLayout } from './layouts/AppLayout'
 import { GalleryPage } from './pages/GalleryPage'
-import { AuthCallbackPage } from './pages/AuthCallbackPage'
 import { AuthProvider } from './hooks/useAuth'
 import { useUI } from './store/ui'
 import './index.css'
@@ -36,7 +35,6 @@ function App() {
           <Route path="favorites" element={<GalleryPage favorites />} />
           <Route path="upload" element={<UploadPage />} />
           <Route path="edit/:id" element={<UploadPage />} />
-          <Route path="auth/callback" element={<AuthCallbackPage />} />
           <Route
             path="*"
             element={

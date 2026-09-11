@@ -2,27 +2,61 @@
 export const zh: Record<string, string> = {
   'Cloud storage is not configured yet.': '云端存储尚未配置，请先完成项目连接。',
   'Your inspiration, in the cloud.': '你的灵感，云端珍藏。',
-  'Sign in with Google to save and sync your images and prompts.':
-    '使用 Google 登录，保存并同步你的图片和提示词。',
+  'Sign in with your email to save and sync your images and prompts.':
+    '使用邮箱登录，保存并同步你的图片和提示词。',
+  'Welcome back': '用户登录',
+  'Create your account': '用户注册',
+  'Reset your password': '找回密码',
+  'Sign in with your email and password.': '欢迎回来，使用邮箱和密码登录灵感库。',
+  'Verify your email once, then sign in with your password.':
+    '注册时验证邮箱，之后使用密码直接登录。',
+  'Verify your email to choose a new password.': '验证你的邮箱，重新设置登录密码。',
+  'New password': '新密码',
+  'Enter your password': '请输入密码',
+  'Show password': '显示密码',
+  'Hide password': '隐藏密码',
+  'Remember me': '记住我',
+  'Forgot password?': '忘记密码？',
+  'Verify and create account': '验证并创建账户',
+  'Reset password and sign in': '重置密码并登录',
+  'Password updated. You are signed in.': '密码已更新，已为你登录。',
+  'New to PromptVault?': '还没有账号？',
+  'Already have an account?': '已有账号？',
+  'Back to sign in': '直接登录',
+  'Use at least 8 characters for your password.': '密码至少需要 8 个字符。',
+  'Please enter your password.': '请输入密码。',
+  'Please enable email confirmation in the project settings.': '请先在项目后台开启邮箱确认。',
+  'Choose a stronger password with letters, numbers and symbols.':
+    '请设置更强的密码，包含字母、数字和符号。',
+  'Choose a password different from your current password.': '新密码不能与当前密码相同。',
   'Sign in to your vault': '登录你的灵感库',
   'Sign in to save your inspiration.': '登录后收藏灵感',
-  'Use Google to collect images and prompts, with everything saved securely in your cloud library.':
-    '使用 Google 登录，收藏图片与提示词，所有内容安全保存到云端灵感库。',
-  'Opening Google…': '正在前往 Google…',
-  'Continue with Google': '使用 Google 登录',
+  'Send verification code': '发送验证码',
+  'Sending code…': '正在发送验证码…',
+  'Verification code': '邮箱验证码',
+  'Verify and sign in': '验证并登录',
+  'Resend code': '重新发送',
+  'Resend in {seconds}s': '{seconds} 秒后重新发送',
+  'Change email': '更换邮箱',
+  'Code sent to {email}. Check your inbox and spam folder.':
+    '验证码已发送至 {email}，请检查收件箱及垃圾邮件。',
+  'Please enter a valid email address.': '请输入有效的邮箱地址。',
+  'Please enter the verification code from your email.': '请输入邮件中的数字验证码。',
+  'The code is invalid or has expired. Please request a new code.':
+    '验证码错误或已过期，请重新获取验证码。',
+  'Too many requests. Please wait before trying again.': '请求过于频繁，请稍后再试。',
+  'Email sign-in is not enabled. Please contact the site administrator.':
+    '邮箱登录尚未启用，请联系网站管理员。',
+  'New accounts are not enabled. Please contact the site administrator.':
+    '暂未开放新用户注册，请联系网站管理员。',
+  'Unable to send email. Please check the project email configuration.':
+    '邮件发送失败，请检查项目的邮件服务配置。',
   'Cloud sign-in is not available yet. Please finish connecting the project.':
     '云端登录暂不可用，请先完成项目连接。',
   'Your images and prompts are stored in the cloud, accessible only to you by default.':
     '图片与提示词保存到云端，默认仅自己可见。',
   'Sign-out failed. Please try again.': '退出登录失败，请重试。',
   'Sign-in could not be completed. Please try again.': '登录未能完成，请重试。',
-  'Google sign-in was cancelled. Please try again.': 'Google 登录已取消，请重试。',
-  'The sign-in link is missing or expired. Please sign in again.':
-    '登录链接缺失或已过期，请重新登录。',
-  'Sign-in was not completed.': '登录未完成。',
-  'Completing sign-in…': '正在完成登录…',
-  'Connecting to your cloud library.': '正在连接你的云端灵感库。',
-  'Unsupported provider: provider is not enabled': 'Google 登录尚未在云端启用。',
   Gallery: '画廊',
   Favorites: '收藏',
   'Main navigation': '主导航',

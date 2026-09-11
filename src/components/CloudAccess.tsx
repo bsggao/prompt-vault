@@ -17,7 +17,7 @@ export function CloudAccess() {
       <p>
         {t(
           supabase
-            ? 'Sign in with Google to save and sync your images and prompts.'
+            ? 'Sign in with your email to save and sync your images and prompts.'
             : 'Cloud storage is not configured yet.',
         )}
       </p>

@@ -7,7 +7,7 @@ export const testUser = {
   email: 'creator@example.test',
   aud: 'authenticated',
   role: 'authenticated',
-  app_metadata: { provider: 'google', providers: ['google'] },
+  app_metadata: { provider: 'email', providers: ['email'] },
   user_metadata: { full_name: 'Test Creator' },
   created_at: '2026-01-01T00:00:00Z',
 }
@@ -61,7 +61,15 @@ export async function mockCloud(page: Page, authenticated = true) {
     const url = new URL(request.url())
     const pathname = decodeURIComponent(url.pathname)
     const method = request.method()
-    const json = (value: unknown, status = 200) => route.fulfill({ status, json: value })
+    const json = (value: unknown, status = 200) =>
+      route.fulfill({
+        status,
+        json: value,
+        headers: {
+          'x-supabase-api-version': '2024-01-01',
+          'access-control-expose-headers': 'x-supabase-api-version',
+        },
+      })
     if (method === 'OPTIONS')
       return route.fulfill({
         status: 204,
@@ -73,13 +81,22 @@ export async function mockCloud(page: Page, authenticated = true) {
       })
     if (pathname === '/auth/v1/user') return json(testUser)
     if (pathname === '/auth/v1/logout') return json({})
-    if (pathname === '/auth/v1/token') return json(session())
-    if (pathname === '/auth/v1/authorize')
-      return route.fulfill({
-        status: 200,
-        contentType: 'text/html',
-        body: '<h1>Mock Google authorization</h1>',
-      })
+    if (pathname === '/auth/v1/token') {
+      if (
+        url.searchParams.get('grant_type') === 'password' &&
+        request.postDataJSON().password !== 'Test-password-123'
+      )
+        return json({ code: 'invalid_credentials', msg: 'Invalid login credentials' }, 400)
+      return json(session())
+    }
+    if (pathname === '/auth/v1/signup')
+      return json({ ...testUser, identities: [{ id: testUser.id }] })
+    if (pathname === '/auth/v1/resend' || pathname === '/auth/v1/recover') return json({})
+    if (pathname === '/auth/v1/verify') {
+      if (request.postDataJSON().token !== '123456')
+        return json({ code: 'otp_expired', msg: 'Token has expired or is invalid' }, 403)
+      return json(session())
+    }
     if (pathname.startsWith('/rest/v1/prompts')) {
       const id = url.searchParams.get('id')?.replace(/^eq\./, '')
       let result = rows.filter((row) => !id || row.id === id)
@@ -104,13 +121,11 @@ export async function mockCloud(page: Page, authenticated = true) {
     const prefix = '/storage/v1/object/'
     if (pathname === `${prefix}sign/prompt-images` && method === 'POST') {
       return json(
-        request
-          .postDataJSON()
-          .paths.map((path: string) => ({
-            path,
-            signedURL: `/object/sign/prompt-images/${path}?token=test`,
-            error: null,
-          })),
+        request.postDataJSON().paths.map((path: string) => ({
+          path,
+          signedURL: `/object/sign/prompt-images/${path}?token=test`,
+          error: null,
+        })),
       )
     }
     if (pathname.startsWith(`${prefix}sign/prompt-images/`)) {
