@@ -1,0 +1,105 @@
+import { test, expect } from './fixtures'
+
+test('language preference persists and translated filters retain their values', async ({
+  page,
+  context,
+}) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write'])
+  await page.goto('/')
+  await page.getByRole('button', { name: '切换为中文' }).click()
+  await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN')
+  await expect(page.getByRole('heading', { name: '发现灵感的世界' })).toBeVisible()
+  await page.getByRole('button', { name: '产品', exact: true }).click()
+  await expect(page.locator('.prompt-card')).toHaveCount(3)
+  await page.getByRole('combobox', { name: '全部模型' }).selectOption('GPT Image')
+  await expect(page.locator('.prompt-card')).toHaveCount(2)
+  await page.getByRole('button', { name: 'Switch to English' }).click()
+  await expect(page.getByRole('button', { name: 'Product', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
+  await expect(page.getByRole('combobox', { name: 'All models' })).toHaveValue('GPT Image')
+  await expect(page.locator('.prompt-card')).toHaveCount(2)
+  await page.getByRole('button', { name: '切换为中文' }).click()
+  await page.reload()
+  await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN')
+  await expect(page.getByRole('searchbox')).toHaveAttribute(
+    'placeholder',
+    '搜索提示词、标题、标签…',
+  )
+  await page.getByRole('button', { name: '查看 Summer in bloom', exact: true }).click()
+  const dialog = page.getByRole('dialog')
+  await expect(dialog.getByText('人像', { exact: true })).toBeVisible()
+  const originalPrompt = await dialog.locator('.copy-block p').first().innerText()
+  await dialog.getByRole('button', { name: '复制提示词', exact: true }).first().click()
+  await expect(page.getByText('提示词已复制', { exact: true })).toBeVisible()
+  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe(originalPrompt)
+  await expect(dialog.locator('.detail-created')).toContainText('2026年')
+  await dialog.getByRole('button', { name: '删除', exact: true }).click()
+  await expect(page.getByRole('alertdialog').getByText('确定删除这条提示词？')).toBeVisible()
+  await page.getByRole('alertdialog').getByRole('button', { name: '取消' }).click()
+  await dialog.getByRole('button', { name: '关闭弹窗' }).click()
+  await page.getByRole('button', { name: '打开账户' }).click()
+  await expect(page.getByText('creator@example.test', { exact: true })).toBeVisible()
+})
+
+test('switching language preserves draft, translates existing errors, and saves canonical options', async ({
+  page,
+}) => {
+  await page.goto('/upload')
+  await page.getByRole('button', { name: 'Save prompt', exact: true }).click()
+  await expect(page.getByText('Choose an image to continue.')).toBeVisible()
+  await page.getByRole('button', { name: '切换为中文' }).click()
+  await expect(page.getByText('请先选择一张图片。')).toBeVisible()
+  await page.getByLabel('标题', { exact: true }).fill('我的灵感 / My inspiration')
+  await page.getByLabel('提示词', { exact: true }).fill('A quiet garden. 宁静的花园。')
+  await page.getByLabel('分类', { exact: false }).selectOption('Product')
+  await page.getByLabel('AI 模型').selectOption('Other')
+  await page.locator('select[name="source"]').selectOption('Xiaohongshu')
+  await page.getByRole('textbox', { name: '标签', exact: true }).fill('花园')
+  await page.getByRole('textbox', { name: '标签', exact: true }).press('Enter')
+  await page.getByRole('button', { name: 'Switch to English' }).click()
+  await expect(page.getByLabel('Title', { exact: true })).toHaveValue('我的灵感 / My inspiration')
+  await expect(page.getByLabel('Prompt', { exact: true })).toHaveValue(
+    'A quiet garden. 宁静的花园。',
+  )
+  await expect(page.getByLabel('Category', { exact: false })).toHaveValue('Product')
+  await expect(page.getByLabel('AI model')).toHaveValue('Other')
+  await expect(page.locator('select[name="source"]')).toHaveValue('Xiaohongshu')
+  await expect(page.getByRole('button', { name: 'Remove tag 花园' })).toBeVisible()
+  await page.getByLabel('Upload image', { exact: true }).setInputFiles('public/images/demo-9.jpg')
+  await expect(page.getByAltText('Image preview')).toBeVisible()
+  await page.getByRole('button', { name: '切换为中文' }).click()
+  await page.getByRole('button', { name: '保存提示词', exact: true }).click()
+  await expect(page).toHaveURL('/')
+  await expect(page.getByText('提示词已保存', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: '查看 我的灵感 / My inspiration', exact: true }).click()
+  const dialog = page.getByRole('dialog')
+  await expect(dialog.locator('.copy-block p').first()).toHaveText('A quiet garden. 宁静的花园。')
+  await expect(dialog.getByText('产品', { exact: true })).toBeVisible()
+  await expect(dialog.getByText('其他', { exact: true })).toBeVisible()
+  await expect(dialog.getByText('小红书', { exact: true })).toBeVisible()
+  await dialog.getByRole('link', { name: '编辑', exact: true }).click()
+  await expect(page.getByRole('combobox', { name: /分类/ })).toHaveValue('Product')
+})
+
+test('Chinese navigation and filter drawer fit a narrow mobile screen', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.setViewportSize({ width: 320, height: 780 })
+  await page.goto('/')
+  await page.getByRole('button', { name: '切换为中文' }).click()
+  await expect(page.getByRole('button', { name: 'Switch to English' })).toBeInViewport()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await page.getByRole('button', { name: '筛选', exact: true }).click()
+  await page.getByRole('radio', { name: '产品', exact: true }).check()
+  await page.getByRole('button', { name: '查看 3 条提示词' }).click()
+  await expect(page.locator('.prompt-card')).toHaveCount(3)
+  await page.screenshot({ path: 'artifacts/gallery-chinese-mobile.png' })
+  await page.goto('/upload')
+  await expect(page.locator('.prompt-form')).toBeVisible()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await page.screenshot({ path: 'artifacts/upload-chinese-mobile.png', fullPage: true })
+  await page.getByRole('button', { name: 'Switch to English' }).click()
+  await expect(page.getByRole('button', { name: '切换为中文' })).toBeInViewport()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+})

@@ -1,0 +1,7 @@
+dist
+node_modules
+.npm-cache
+public/images
+artifacts
+package-lock.json
+test-results
