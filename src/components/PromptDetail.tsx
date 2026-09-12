@@ -27,16 +27,21 @@ function CopyBlock({ title, text }: { title: string; text: string }) {
   const { copied, copy } = useCopy()
   return (
     <section className="detail-section">
-      <h3>{title}</h3>
-      <div className="copy-block">
-        <p>{text}</p>
+      <div className="copy-block-heading">
+        <h3>{title}</h3>
         <button
+          className="copy-block-copy"
           title={copied ? t('Copied') : t('Copy')}
           aria-label={t('Copy {title}', { title })}
           onClick={() => copy(text)}
         >
           {copied ? <Check size={16} /> : <Copy size={16} />}
         </button>
+      </div>
+      <div className="copy-block">
+        <p tabIndex={0} role="region" aria-label={title}>
+          {text}
+        </p>
       </div>
     </section>
   )

@@ -1009,26 +1009,78 @@ p {
   font-weight: 600;
   margin-bottom: 8px;
 }
-.copy-block {
+.copy-block-heading {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.copy-block-heading h3 {
+  margin-bottom: 0;
+}
+.copy-block-copy {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  color: var(--secondary);
+  transition: background 0.18s, color 0.18s;
+}
+.copy-block-copy:hover {
   background: var(--soft);
-  padding: 12px;
-  border-radius: 5px;
-  gap: 8px;
+  color: var(--accent);
+}
+.copy-block {
+  background: var(--soft);
+  padding: 4px;
+  border-radius: 8px;
 }
 .copy-block p {
+  padding: 12px;
   font-size: 11px;
   line-height: 1.8;
   color: var(--secondary);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  flex: 1;
   min-width: 0;
+  max-height: min(360px, 45dvh);
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
 }
-.copy-block button {
-  padding: 1px;
-  color: #71809b;
+.copy-block p:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+  border-radius: 5px;
+}
+:is(.copy-block p, .detail-content, .detail-modal)::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+:is(.copy-block p, .detail-content, .detail-modal)::-webkit-scrollbar-track {
+  background: transparent;
+}
+:is(.copy-block p, .detail-content, .detail-modal)::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--secondary) 28%, transparent);
+  border-radius: 999px;
+}
+:is(.copy-block p, .detail-content, .detail-modal)::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--secondary) 48%, transparent);
+}
+:is(.copy-block p, .detail-content, .detail-modal)::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+@supports not selector(::-webkit-scrollbar) {
+  .copy-block p,
+  .detail-content,
+  .detail-modal {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--secondary) 28%, transparent) transparent;
+  }
 }
 .detail-notes {
   font-size: 11px;
@@ -2667,16 +2719,14 @@ html:lang(zh) .category {
 .empty-state p {
   font-size: 14px;
 }
-.detail-heart,
-.copy-block button {
+.detail-heart {
   width: 44px;
   min-height: 44px;
   display: grid;
   place-items: center;
   border-radius: 8px;
 }
-.detail-heart:hover,
-.copy-block button:hover {
+.detail-heart:hover {
   background: var(--soft);
 }
 .detail-badges > span,
