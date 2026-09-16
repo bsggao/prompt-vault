@@ -37,7 +37,7 @@ export function GalleryPage({
     ? items
     : mine
       ? items.filter((item) => item.ownerId === user?.id)
-      : items.filter((item) => item.isPublic)
+      : items.filter((item) => item.isPublic && item.moderationStatus !== 'removed')
   const filtered = filterPrompts(scopedItems, ui, favorites)
   const current = items.find((p) => p.id === selected)
   const hasFilters =

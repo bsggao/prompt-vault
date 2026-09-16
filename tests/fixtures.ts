@@ -26,7 +26,15 @@ function session() {
   }
 }
 
-export async function mockCloud(page: Page, authenticated = true) {
+export async function mockCloud(
+  page: Page,
+  authenticated = true,
+  adminState: {
+    removed?: boolean
+    suspended?: boolean
+    title?: string
+  } = {},
+) {
   await page.addInitScript(
     ({ authenticated, value }) => {
       if (!sessionStorage.getItem('mock-auth-initialized')) {
@@ -52,6 +60,7 @@ export async function mockCloud(page: Page, authenticated = true) {
     notes: p.notes,
     is_favorite: p.isFavorite,
     is_public: true,
+    moderation_status: adminState.removed && index === 0 ? 'removed' : 'normal',
     created_at: p.createdAt,
     updated_at: p.updatedAt,
   }))
@@ -82,6 +91,11 @@ export async function mockCloud(page: Page, authenticated = true) {
           'access-control-allow-methods': '*',
         },
       })
+    if (pathname === '/rest/v1/console_settings')
+      return adminState.title
+        ? json({ site_title: adminState.title, description: '后台配置的站点简介' })
+        : json({ code: 'PGRST205', message: 'Settings not installed yet' }, 404)
+    if (pathname === '/rest/v1/rpc/console_can_write') return json(!adminState.suspended)
     if (pathname === '/auth/v1/user') return json(testUser)
     if (pathname === '/auth/v1/logout') return json({})
     if (pathname === '/auth/v1/token') {

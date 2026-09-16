@@ -9,6 +9,7 @@ import { GalleryPage } from './pages/GalleryPage'
 import { AuthProvider } from './hooks/useAuth'
 import { useUI } from './store/ui'
 import './index.css'
+import { useSiteSettings } from './hooks/useSiteSettings'
 const UploadPage = React.lazy(() =>
   import('./pages/UploadPage').then((module) => ({ default: module.UploadPage })),
 )
@@ -16,13 +17,14 @@ const client = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
 })
 function App() {
+  const { data: settings } = useSiteSettings()
   const { t, language, locale } = useI18n()
 
   const theme = useUI((s) => s.theme)
   React.useEffect(() => {
     document.documentElement.lang = locale
-    document.title = t('PromptVault — Your creative library')
-  }, [language, locale, t])
+    document.title = settings?.site_title || t('PromptVault — Your creative library')
+  }, [language, locale, t, settings?.site_title])
   React.useEffect(() => {
     document.documentElement.dataset.theme = theme
     document.documentElement.style.colorScheme = theme

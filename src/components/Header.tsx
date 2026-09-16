@@ -8,11 +8,13 @@ import { LanguageToggle } from './LanguageToggle'
 import { Button } from './ui/button'
 import { useAuth } from '../hooks/useAuth'
 import { useUI } from '../store/ui'
+import { useSiteSettings } from '../hooks/useSiteSettings'
 
 const AuthDialog = lazy(() =>
   import('./AuthDialog').then((module) => ({ default: module.AuthDialog })),
 )
 export function Header() {
+  const { data: settings } = useSiteSettings()
   const { t } = useI18n()
 
   const { user } = useAuth()
@@ -41,8 +43,9 @@ export function Header() {
       <header className="header">
         <Link to="/" className="brand" onClick={resetFilters}>
           <img src="/favicon.svg" alt="" />
-          <span>
-            PromptVault<span className="brand-dot">.</span>
+          <span className="brand-label" title={settings?.site_title || 'PromptVault'}>
+            {settings?.site_title || 'PromptVault'}
+            <span className="brand-dot">.</span>
           </span>
         </Link>
         <nav aria-label={t('Main navigation')}>

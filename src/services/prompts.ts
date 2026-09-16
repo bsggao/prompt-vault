@@ -28,6 +28,7 @@ type PromptRow = ReturnType<typeof toRow> & {
   user_id: string
   created_at: string
   updated_at: string
+  moderation_status?: 'normal' | 'removed'
 }
 
 function fromRow(row: PromptRow, imageUrl: string): PromptItem {
@@ -47,6 +48,7 @@ function fromRow(row: PromptRow, imageUrl: string): PromptItem {
     notes: row.notes,
     isFavorite: row.is_favorite,
     isPublic: row.is_public,
+    moderationStatus: row.moderation_status ?? 'normal',
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }

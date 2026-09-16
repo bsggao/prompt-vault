@@ -14,6 +14,7 @@ export interface PromptItem {
   notes?: string
   isFavorite: boolean
   isPublic: boolean
+  moderationStatus?: 'normal' | 'removed'
   createdAt: string
   updatedAt: string
   collectionId?: string

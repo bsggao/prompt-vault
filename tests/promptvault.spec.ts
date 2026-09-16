@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test'
-import { test, expect } from './fixtures'
+import { test, expect, mockCloud } from './fixtures'
 async function settleImages(page: Page) {
   await page.locator('img').evaluateAll(async (images) => {
     await Promise.all(
@@ -192,4 +192,24 @@ test('mobile two-column layout, filter drawer and readable detail', async ({ pag
     true,
   )
   await page.screenshot({ path: 'artifacts/upload-mobile.png', fullPage: true })
+})
+
+test('admin branding, business restriction and removed-content visibility are reflected in the frontend', async ({
+  page,
+}) => {
+  await mockCloud(page, true, { removed: true, suspended: true, title: '高高的灵感库' })
+  await page.goto('/')
+  await expect(page.locator('.brand')).toContainText('高高的灵感库')
+  await expect(page).toHaveTitle('高高的灵感库')
+  await expect(page.getByRole('status')).toContainText('uploading, editing')
+  await expect(page.locator('.prompt-card')).toHaveCount(11)
+  await expect(page.getByRole('button', { name: 'View Summer in bloom', exact: true })).toHaveCount(
+    0,
+  )
+  await page.getByRole('link', { name: 'Mine', exact: true }).click()
+  await expect(page.getByText('Removed from gallery', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'View Summer in bloom', exact: true }).click()
+  await expect(
+    page.getByRole('dialog').getByRole('button', { name: 'Share', exact: true }),
+  ).toHaveCount(0)
 })

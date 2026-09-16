@@ -45,7 +45,13 @@ export function PromptCard({
           {showVisibility && (
             <span className={`visibility-badge ${item.isPublic ? 'is-public' : 'is-private'}`}>
               {item.isPublic ? <Globe2 size={12} /> : <LockKeyhole size={12} />}
-              {t(item.isPublic ? 'Public' : 'Only you')}
+              {t(
+                item.moderationStatus === 'removed'
+                  ? 'Removed from gallery'
+                  : item.isPublic
+                    ? 'Public'
+                    : 'Only you',
+              )}
             </span>
           )}
         </div>

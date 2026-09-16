@@ -163,6 +163,9 @@ export const zh: Record<string, string> = {
   Notes: '备注',
   Created: '创建于',
   Public: '公开',
+  'Removed from gallery': '已下架',
+  'Your account can browse, but uploading, editing and favorites are disabled. Contact the administrator for help.':
+    '当前账户可浏览内容，上传、编辑、删除及收藏操作已禁用。如需恢复，请联系管理员。',
   'Only you': '仅自己可见',
   Edit: '编辑',
   Delete: '删除',

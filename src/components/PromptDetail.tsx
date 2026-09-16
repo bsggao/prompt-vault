@@ -195,14 +195,20 @@ export function PromptDetail({
               year: 'numeric',
             })}
             <span>·</span>
-            {item.isPublic ? t('Public') : t('Only you')}
+            {t(
+              item.moderationStatus === 'removed'
+                ? 'Removed from gallery'
+                : item.isPublic
+                  ? 'Public'
+                  : 'Only you',
+            )}
           </div>
           <div className="detail-actions">
             <Button onClick={() => copy(item.prompt)}>
               {copied ? <Check size={15} /> : <Copy size={15} />}{' '}
               {copied ? t('Copied') : t('Copy prompt')}
             </Button>
-            {item.isPublic && (
+            {item.isPublic && item.moderationStatus !== 'removed' && (
               <Button variant="outline" onClick={() => void sharePrompt()}>
                 <Share2 size={15} />
                 {t('Share')}

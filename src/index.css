@@ -3129,3 +3129,20 @@ html:lang(zh) .category {
     display: none;
   }
 }
+/* Status provided by the admin console; content remains readable. */
+.account-status-notice {
+  margin: 12px auto;
+  max-width: 1380px;
+  padding: 12px 20px;
+  border: 1px solid #d8a957;
+  border-radius: 8px;
+  background: #fff6df;
+  color: #714709;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.brand-label { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.site-footer > span:nth-child(2) { max-width: 480px; overflow-wrap: anywhere; }
+@media (max-width: 640px) { .brand-label { max-width: 120px; } }
+[data-theme="dark"] .account-status-notice { color: #f4d394; background: #332916; border-color: #796132; }
